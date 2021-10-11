@@ -3,17 +3,31 @@ import { Text, Image, View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/core";
 import styles from "./styles";
 import { Auth, DataStore } from "aws-amplify";
-import { ChatRoom, User } from "../../src/models";
+import { ChatRoom, User, ChatRoomUser } from "../../src/models";
 
 export default function UserItem({ user }) {
   const navigation = useNavigation();
 
   const onPress = async () => {
-    // const newChatRoom = await DataStore.save(new ChatRoom({ newMessages: 0 }));
+    const newChatRoom = await DataStore.save(new ChatRoom({ newMessages: 0 }));
 
     const authUser = await Auth.currentAuthenticatedUser();
     const dbUser = await DataStore.query(User, authUser.attributes.sub);
-    console.log(dbUser);
+    await DataStore.save(
+      new ChatRoomUser({
+        user: dbUser,
+        chatroom: newChatRoom,
+      })
+    );
+
+    await DataStore.save(
+      new ChatRoomUser({
+        user,
+        chatroom: newChatRoom,
+      })
+    );
+
+    navigation.navigate("ChatRoom", { id: newChatRoom.id });
   };
 
   return (
